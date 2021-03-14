@@ -254,4 +254,18 @@ undistortPoints(
     return out_vec;
 }
 
+std::vector<cv::Point2f>
+undistortAndNormalizePoints(
+    const std::vector<cv::Point2f>& pts,
+    const Camera& cam)
+{
+    std::vector<cv::Point2f> out_vec;
+
+    cv::undistortPoints(
+        pts,
+        out_vec,
+        cam.K,
+        cam.D);
+}
+
 } // namespace mft

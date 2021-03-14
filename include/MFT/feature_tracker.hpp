@@ -108,6 +108,11 @@ public:
     undistortPoints(
         const std::vector<cv::Point2f>& pts,
         const Camera& cam);
+    // Undistort points and reframe with identity camera matrix
+    std::vector<cv::Point2f>
+    undistortAndNormalizePoints(
+        const std::vector<cv::Point2f>& pts,
+        const Camera& cam);
 
 private:
     uint64_t id_counter_;
