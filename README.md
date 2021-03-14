@@ -17,7 +17,7 @@ a ```sensor_msgs::PointCloud``` where the channels are as follows:
 
 ## Installation
 
-```>> git clone <url>```
+```>> git clone https://github.com/mattboler/mft```
 
 ```>> catkin build```
 
