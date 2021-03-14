@@ -12,6 +12,9 @@ a ```sensor_msgs::PointCloud``` where the channels are as follows:
 
 ## Dependencies
 
+* OpenCV (Written and tested with 4.2.0)
+* ROS (Written and tested with ROS Noetic on Ubuntu 20.04)
+
 ## Installation
 
 ```>> git clone <url>```
