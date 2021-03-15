@@ -1,0 +1,9 @@
+<launch>
+    <node name="feature_tracker" pkg="mft" type="feature_tracker_node" output="screen">
+        <param name="camera_path" type="string" value="$(find mft)/config/euroc/camera.yaml" />
+        <param name="tracker_path" type="string" value="$(find mft)/config/euroc/tracker.yaml" />
+        <param name="image_topic" type="string" value="/cam0/image_raw" />
+        <param name="feature_topic" type="string" value="/feature_tracker/features" />
+        <param name="visualization_topic" type="string" value="/feature_tracker/visualization" />
+    </node>
+</launch>

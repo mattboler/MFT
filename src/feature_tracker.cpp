@@ -8,7 +8,7 @@ FeatureTrackerParams buildTrackerParams(std::string path)
 
     auto n = YAML::LoadFile(path);
 
-    p.num_features = n["num_features"].as<double>();
+    p.num_features = n["num_features"].as<int>();
     p.use_clahe = n["use_clahe"].as<bool>();
     p.minimum_distance = n["minimum_distance"].as<size_t>();
     p.use_subpix = n["use_subpix"].as<bool>();
@@ -51,6 +51,11 @@ Camera buildCamera(std::string path)
     return c;
 }
 
+FeatureTracker::FeatureTracker()
+{
+
+}
+
 FeatureTracker::FeatureTracker(
     FeatureTrackerParams params,
     Camera cam)
@@ -66,14 +71,14 @@ FeatureTracker::buildFirstFrame(
     const cv::Mat& img)
 {
     auto f = Frame();
-    f.img = img;
+    img.copyTo(f.img);
 
     if (params_.use_clahe) {
         auto clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         clahe->apply(f.img, f.img);
     }
     
-    extractFeatures(f);
+    extractFeatures_(f);
 
     return f;
 }
@@ -83,7 +88,7 @@ Frame FeatureTracker::buildNextFrame(
     const Frame& prev_frame)
 {
     auto f = Frame();
-    f.img = img;
+    img.copyTo(f.img);
 
     if (params_.use_clahe) {
         auto clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
@@ -92,26 +97,50 @@ Frame FeatureTracker::buildNextFrame(
 
     // Track previous features if possible
     // Update ages, fill in velocities etc
-    trackFeatures(
+    trackFeatures_(
         f,
         prev_frame);
     
     // Detect new features
     // Assign new features ids, ages, etc
-    extractFeatures(f);
+    extractFeatures_(f);
 
     return f;
 }
 
+cv::Mat
+FeatureTracker::annotateFrame(
+    const Frame& f)
+{
+    cv::Mat img;
+    f.img.copyTo(img);
+
+    cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
+
+    for (const auto& pt : f.points) {
+        cv::circle(
+            img,
+            pt,
+            3,
+            cv::Scalar(0, 0, 255),
+            -1);
+    }
+
+    return img;
+}
+
 void
-FeatureTracker::extractFeatures(
+FeatureTracker::extractFeatures_(
     Frame& f)
 {   
     /**
      * 1. Extract features
      * 2. Assign IDs, ages, and velocies to new features
-     * 3.
      */
+
+    if (params_.num_features <= f.points.size()) { // Do we have enough already?
+        return;
+    }
 
     if (f.points.size() != 0) { // Need to mask off previous points
         detectFeaturesMask_(f);
@@ -136,12 +165,13 @@ FeatureTracker::detectFeaturesMask_(
     cv::goodFeaturesToTrack(
         f.img,
         new_points,
-        this->params_.num_features - f.points.size(),
+        params_.num_features - f.points.size(),
         0.01,
         this->params_.minimum_distance,
         mask);
+
     // undistort features
-    auto new_points_und = undistortAndNormalizePoints(new_points);
+    auto new_points_und = undistortAndNormalizePoints_(new_points);
     
     // assign ids
     std::vector<uint64_t> new_ids;
@@ -168,7 +198,7 @@ FeatureTracker::detectFeaturesMask_(
 }
 
 cv::Mat
-buildMask_(
+FeatureTracker::buildMask_(
     const cv::Mat& img,
     const std::vector<cv::Point2f>& pts,
     const int radius)
@@ -178,6 +208,8 @@ buildMask_(
     for (const auto& pt : pts) {
         cv::circle(mask, pt, radius, 0, -1);
     }
+
+    return mask;
 }
 
 void
@@ -191,11 +223,11 @@ FeatureTracker::detectFeaturesNoMask_(
     cv::goodFeaturesToTrack(
         f.img,
         new_points,
-        this->params_.num_features - f.points.size(),
+        params_.num_features - f.points.size(),
         0.01,
-        this->params_.minimum_distance);
+        params_.minimum_distance);
     // undistort features
-    auto new_points_und = undistortAndNormalizePoints(new_points);
+    auto new_points_und = undistortAndNormalizePoints_(new_points);
     
     // assign ids
     std::vector<uint64_t> new_ids;
@@ -221,80 +253,86 @@ FeatureTracker::detectFeaturesNoMask_(
 }
 
 void
-FeatureTracker::trackFeatures(
+FeatureTracker::trackFeatures_(
     Frame& next_frame,
     const Frame& prev_frame)
 {
+    // Extract previous info
+    auto prev_img = prev_frame.img;
+    auto ids = prev_frame.ids;
+    auto ages = prev_frame.ages;
+    auto prev_points = prev_frame.points;
+
+    // Extract incoming info
+    auto next_img = next_frame.img;
+
     std::vector<cv::Point2f> new_points;
-    std::vector<uchar> status;
+    std::vector<uchar> pyrlk_status;
     std::vector<float> err;
 
     cv::calcOpticalFlowPyrLK(
-        prev_frame.img,
-        next_frame.img,
-        prev_frame.points,
-        new_points,
-        status,
-        err,
-        cv::Size(this->params_.window_size, this->params_.window_size),
-        this->params_.num_levels);
-    
+       prev_img,
+       next_img,
+       prev_points,
+       new_points,
+       pyrlk_status,
+       err,
+       cv::Size(params_.window_size, params_.window_size),
+       params_.num_levels);
+    // Filter out points that moved too muchb
     for (int i = 0; i < new_points.size(); ++i) {
-        if(status[i] && cv::norm(new_points[i] - prev_frame.points[i]) > 25) {
-            status[i] = 0;
+        if(pyrlk_status[i] && cv::norm(new_points[i] - prev_frame.points[i]) > 25) {
+            pyrlk_status[i] = 0;
         }
     }
 
     // Filter out failed tracking points
-    auto ids = prev_frame.ids;
-    filterByMask(ids, status);
+    filterByMask(ids, pyrlk_status);
+    filterByMask(prev_points, pyrlk_status);
+    filterByMask(new_points, pyrlk_status);
+    filterByMask(ages, pyrlk_status);
 
-    auto prev_points = prev_frame.points;
-    filterByMask(prev_points, status);
-
-    auto ages = prev_frame.ages;
-    filterByMask(ages, status);
+    // Increment ages while we're at it
     for (int i = 0; i < ages.size(); ++i) {
         ages[i]++;
     }
-
+    // create velocities too
     std::vector<double> new_velocities(new_points.size());
     for (int i = 0; i < new_points.size(); ++i) {
         new_velocities[i] = cv::norm(new_points[i] - prev_points[i]);
     }
 
-    filterByMask(new_points, status);
     // Use pixel coordinates for ransac so pix_thresh makes sense
-    auto new_points_und = undistortPoints(new_points);
-    auto prev_points_und = undistortPoints(prev_points);
+    auto new_points_und = undistortPoints_(new_points);
+    auto prev_points_und = undistortPoints_(prev_points);
 
     // Reject more outliers with FMAT
-    status.clear();
+    std::vector<uchar> fmat_status;
+
     cv::findFundamentalMat(
         prev_points_und,
         new_points_und,
         cv::FM_RANSAC,
         this->params_.ransac_pix_threshold,
         this->params_.ransac_confidence,
-        status);
+        fmat_status);
     
-    filterByMask(ids, status);
-    filterByMask(new_points, status);
-    filterByMask(new_points_und, status);
-    filterByMask(ages, status);
-    filterByMask(new_velocities, status);
+    filterByMask(ids, fmat_status);
+    filterByMask(new_points, fmat_status);
+    filterByMask(ages, fmat_status);
+    filterByMask(new_velocities, fmat_status);
 
 
     // Assemble frame
     next_frame.ids = ids;
     next_frame.points = new_points;
-    next_frame.points_und = undistortAndNormalizePoints(new_points);
+    next_frame.points_und = undistortAndNormalizePoints_(new_points);
     next_frame.ages = ages;
     next_frame.velocities = new_velocities;
 }
 
 std::vector<cv::Point2f>
-FeatureTracker::undistortPoints(
+FeatureTracker::undistortPoints_(
     const std::vector<cv::Point2f>& pts)
 {
     std::vector<cv::Point2f> out_vec;
@@ -311,7 +349,7 @@ FeatureTracker::undistortPoints(
 }
 
 std::vector<cv::Point2f>
-FeatureTracker::undistortAndNormalizePoints(
+FeatureTracker::undistortAndNormalizePoints_(
     const std::vector<cv::Point2f>& pts)
 {
     std::vector<cv::Point2f> out_vec;
@@ -321,6 +359,8 @@ FeatureTracker::undistortAndNormalizePoints(
         out_vec,
         cam_.K,
         cam_.D);
+    
+    return out_vec;
 }
 
 } // namespace mft

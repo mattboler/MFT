@@ -1,4 +1,4 @@
-num_features: 200
+num_features: 250
 use_clahe: false
 
 minimum_distance: 15

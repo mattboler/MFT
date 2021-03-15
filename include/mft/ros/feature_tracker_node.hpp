@@ -17,6 +17,9 @@ public:
     sensor_msgs::PointCloudPtr buildFeatureMsg(
         const Frame& f,
         const std_msgs::Header& h);
+    sensor_msgs::ImagePtr buildVisualizationMsg(
+        const Frame& f,
+        const std_msgs::Header& h);
 private:
     ros::NodeHandle nh_;
     image_transport::ImageTransport it_;

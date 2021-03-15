@@ -18,7 +18,7 @@ namespace mft {
 struct FeatureTrackerParams {
     // --- High-level parameters ---
     // How many feature are tracked at once?
-    int num_features = 200; 
+    int num_features = 250; 
     // Enhance contrast before using images
     bool use_clahe = false; 
     
@@ -96,13 +96,26 @@ public:
     Frame buildNextFrame(
         const cv::Mat& img,
         const Frame& prev_frame);
+    
+    /**
+     * Draw frame with features
+     */ 
+    cv::Mat
+    annotateFrame(
+        const Frame& f);
+    
+
+private:
+    uint64_t id_counter_;
+    FeatureTrackerParams params_;
+    Camera cam_;
 
     /**
      * Input: Any frame
      * Output: Same frame with new features detected, along with updated info
      */ 
     void
-    extractFeatures(
+    extractFeatures_(
         Frame& f);
 
     /**
@@ -110,23 +123,18 @@ public:
      * Output: Frame with features tracked from previous frame, no new features
      */ 
     void
-    trackFeatures(
+    trackFeatures_(
         Frame& next_frame,
         const Frame& prev_frame);
     
     // Undistort points while retaining the existing camera matrix
     std::vector<cv::Point2f>
-    undistortPoints(
+    undistortPoints_(
         const std::vector<cv::Point2f>& pts);
     // Undistort points and reframe with identity camera matrix
     std::vector<cv::Point2f>
-    undistortAndNormalizePoints(
+    undistortAndNormalizePoints_(
         const std::vector<cv::Point2f>& pts);
-
-private:
-    uint64_t id_counter_;
-    FeatureTrackerParams params_;
-    Camera cam_;
 
     void
     detectFeaturesMask_(

@@ -128,10 +128,26 @@ include_directories(
   ${YAML_CPP_INCLUDE_DIR}
 )
 
+list(APPEND libs
+  ${OpenCV_LIBS}
+  ${YAML_CPP_LIBRARIES}
+)
+
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/MFT.cpp
-# )
+add_library(${PROJECT_NAME}
+  src/feature_tracker.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  ${libs}
+)
+
+add_executable(feature_tracker_node ros/feature_tracker_node.cpp)
+target_link_libraries(feature_tracker_node
+  ${PROJECT_NAME}
+  ${libs}
+  ${catkin_LIBRARIES}
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
