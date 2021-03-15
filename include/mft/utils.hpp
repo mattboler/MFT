@@ -23,6 +23,23 @@ filterByMask(
     vec.resize(j);
 }
 
+template <typename T>
+void
+filterByMaskBatch(
+    std::vector<std::vector<T>>& vecs,
+    const std::vector<uchar>& mask)
+{
+    // Check all vectors are the same length
+    size_t size = mask.size();
+    for (auto& v : vecs) {
+        if v.size() != size {
+            throw "Vectors are not the same length!";
+        } else {
+            filterByMask(v, mask);
+        }
+    }
+}
+
 } // namespace mft
 
 #endif

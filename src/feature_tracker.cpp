@@ -295,9 +295,9 @@ FeatureTracker::trackFeatures_(
     
     if (ids.size() < 8) { // Need at least 8 points to estimate FMAT
     /**
-     * TODO: Return here with "empty" frame instead of erroring out 
+     * Don't even try to track any more points, FMAT will fail
      */
-        throw "Too few points for ransac!";
+        return;
     }
 
     // Increment ages while we're at it
