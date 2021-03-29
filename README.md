@@ -28,7 +28,8 @@ a ```sensor_msgs::PointCloud``` where the channels are as follows:
 
 Heavy inspiration drawn from:
 
-* [uzh-rpg/vilib](https://github.com/uzh-rpg/vilib)
+### VILIB
+[uzh-rpg/vilib](https://github.com/uzh-rpg/vilib)
 
 @inproceedings{Nagy2020,
   author = {Nagy, Balazs and Foehn, Philipp and Scaramuzza, Davide},
@@ -37,9 +38,11 @@ Heavy inspiration drawn from:
   year = {2020}
 }
 
-* [daniilidis-group/msckf_mono](https://github.com/daniilidis-group/msckf_mono)
+### MSCKF-MONO
+[daniilidis-group/msckf_mono](https://github.com/daniilidis-group/msckf_mono)
 
-* [HKUST-Aerial-Robotics/vins_mono](https://github.com/HKUST-Aerial-Robotics/VINS-Mono)
+## VINS-MONO
+[HKUST-Aerial-Robotics/vins_mono](https://github.com/HKUST-Aerial-Robotics/VINS-Mono)
 
 @article{qin2017vins,
   title={VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator},
