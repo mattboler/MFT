@@ -41,7 +41,7 @@ Heavy inspiration drawn from:
 ### MSCKF-MONO
 [daniilidis-group/msckf_mono](https://github.com/daniilidis-group/msckf_mono)
 
-## VINS-MONO
+### VINS-MONO
 [HKUST-Aerial-Robotics/vins_mono](https://github.com/HKUST-Aerial-Robotics/VINS-Mono)
 
 @article{qin2017vins,
