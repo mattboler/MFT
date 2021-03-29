@@ -1,0 +1,32 @@
+camera:
+  size:
+    width: 752
+    height: 480
+  intrinsics:
+    fx: 457.587
+    fy: 456.134
+    cx: 379.999
+    cy: 255.238
+  distortion:
+    k1: -0.28368365
+    k2: 0.07451284
+    p1: -0.00010473
+    p2: -3.55590700e-05
+    k3: 0
+detector:
+  # Occupancy grid
+  grid_width: 8
+  grid_height: 8
+  horizontal_border: 8
+  vertical_border: 8
+  # FAST 
+  init_fast_threshold: 10
+  min_fast_threshold: 2
+
+tracker:
+  # KLT
+  max_iterations: 30
+  convergence_threshold: 0.01
+  # Outlier rejection
+  feature_motion_threshold: 25.0
+  ransac_pixel_threshold: 1.0

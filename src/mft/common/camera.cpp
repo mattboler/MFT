@@ -2,6 +2,8 @@
 
 namespace mft {
 
+// TODO: Rework this into a class constructor
+
 Camera buildCamera(std::string path) 
 {
     Camera c;
